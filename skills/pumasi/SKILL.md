@@ -1,6 +1,6 @@
 ---
 name: pumasi
-description: Claude가 큰 그림을 설계하고 Codex를 병렬 외주 개발자로 활용하는 스킬. 독립적인 서브태스크를 Codex에 분배하여 동시 구현 후 Claude가 검토·통합한다.
+description: Claude가 큰 그림을 설계하고 Codex를 병렬 외주 개발자로 활용하는 스킬. 독립적인 서브태스크를 Codex에 분배하여 동시 구현 후 Claude가 검토·통합한다. "/pumasi", "품앗이로 만들어줘", "품앗이 켜줘", "codex 외주로", "codex한테 시켜" 같은 요청에 사용됩니다. 3개 이상의 독립 모듈을 동시에 만들어야 할 때 자동 감지됩니다.
 ---
 
 # 품앗이 (Pumasi) — Codex 병렬 외주 개발
@@ -313,19 +313,19 @@ pumasi:
 ### Phase 3: 실행 (Claude → Bash)
 
 ```bash
-~/.claude/skills/pumasi/scripts/pumasi.sh start "프로젝트 개요: [간단한 설명]"
+${CLAUDE_PLUGIN_ROOT}/scripts/pumasi.sh start "프로젝트 개요: [간단한 설명]"
 ```
 
 ### Phase 4: 모니터링 (Claude)
 
 ```bash
-~/.claude/skills/pumasi/scripts/pumasi.sh wait [JOB_DIR]
+${CLAUDE_PLUGIN_ROOT}/scripts/pumasi.sh wait [JOB_DIR]
 ```
 
 ### Phase 5: 게이트 검증 + 선택적 코드 리뷰 (Claude)
 
 ```bash
-~/.claude/skills/pumasi/scripts/pumasi.sh results [JOB_DIR]
+${CLAUDE_PLUGIN_ROOT}/scripts/pumasi.sh results [JOB_DIR]
 ```
 
 **4단계 검증 프로세스:**
@@ -421,7 +421,7 @@ Codex가 하는 일: 실제 수정 실행
 **수정이 필요 없는 경우**: 서브태스크 간 연결만 확인 후 정리.
 
 ```bash
-~/.claude/skills/pumasi/scripts/pumasi.sh clean [JOB_DIR]
+${CLAUDE_PLUGIN_ROOT}/scripts/pumasi.sh clean [JOB_DIR]
 ```
 
 ---
@@ -666,7 +666,7 @@ pumasi.sh clean [JOB_DIR]
 ## 파일 구조
 
 ```
-~/.claude/skills/pumasi/
+${CLAUDE_PLUGIN_ROOT}/
 ├── SKILL.md                    # 이 문서
 ├── pumasi.config.yaml          # 작업 목록 (매 실행 전 수정)
 └── scripts/
