@@ -50,7 +50,8 @@ After user selection, ask for detailed description, then invoke pumasi skill.
 
 ## Execute
 
-Once the action is determined, follow the pumasi skill's execution flow.
+Read the skill file, then follow the workflow:
 
-Skill content is located at:
-- `${CLAUDE_PLUGIN_ROOT}/skills/pumasi/SKILL.md` — Codex 병렬 실행 워크플로우
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/pumasi/SKILL.md`
+2. Follow SKILL.md's workflow with user's request: `$ARGUMENTS`
+3. Every question MUST use the AskUserQuestion tool — NEVER output questions as text

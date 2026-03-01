@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1] - 2026-03-02
+
+### Fixed
+- Command file Execute 섹션: "located at" 정보 제공 → 명시적 Read 지시로 변경
+  - SKILL.md를 반드시 Read하도록 번호 리스트 추가
+  - AskUserQuestion 도구 호출 필수 규칙 명시
+
 ## [1.3.0] - 2026-02-28
 
 ### Added
