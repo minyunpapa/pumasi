@@ -57,6 +57,10 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 case "$1" in
+  run-all)
+    shift
+    exec node "$SCRIPT_DIR/pumasi-job.js" run-all "$@"
+    ;;
   start|start-round|status|wait|results|stop|clean|gates|redelegate|autofix)
     exec "$JOB_SCRIPT" "$@"
     ;;

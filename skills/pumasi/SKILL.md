@@ -690,7 +690,7 @@ Round 3: 최종 통합 (Claude 직접)
 
 **Codex CLI 필요**:
 ```bash
-which codex  # 설치 확인
+command -v codex  # 설치 확인
 # 없으면: npm install -g @openai/codex
 ```
 

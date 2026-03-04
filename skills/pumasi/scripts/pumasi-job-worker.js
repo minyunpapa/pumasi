@@ -9,6 +9,16 @@ const { spawn } = require('child_process');
 
 const OUTPUT_SCHEMA_PATH = path.join(__dirname, 'codex-output-schema.json');
 
+function killProcess(pid) {
+  try {
+    if (process.platform === 'win32') {
+      process.kill(pid, 'SIGKILL');
+    } else {
+      process.kill(pid, 'SIGTERM');
+    }
+  } catch { /* process already gone */ }
+}
+
 function exitWithError(message) {
   process.stderr.write(`${message}\n`);
   process.exit(1);
@@ -273,7 +283,7 @@ function main() {
   if (Number.isFinite(timeoutSec) && timeoutSec > 0) {
     timeoutHandle = setTimeout(() => {
       timeoutTriggered = true;
-      try { process.kill(child.pid, 'SIGTERM'); } catch { /* ignore */ }
+      killProcess(child.pid);
     }, timeoutSec * 1000);
     timeoutHandle.unref();
   }
@@ -298,8 +308,8 @@ function main() {
 
   child.on('exit', (code, signal) => {
     if (timeoutHandle) clearTimeout(timeoutHandle);
-    const timedOut = Boolean(timeoutTriggered) && signal === 'SIGTERM';
-    const canceled = !timedOut && signal === 'SIGTERM';
+    const timedOut = Boolean(timeoutTriggered) && (signal === 'SIGTERM' || signal === 'SIGKILL');
+    const canceled = !timedOut && (signal === 'SIGTERM' || signal === 'SIGKILL');
     finalize({
       member,
       state: timedOut ? 'timed_out' : canceled ? 'canceled' : code === 0 ? 'done' : 'error',

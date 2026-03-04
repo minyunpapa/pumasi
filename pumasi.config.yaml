@@ -1,6 +1,6 @@
 pumasi:
   defaults:
-    command: "codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check"
+    command: "codex exec --dangerously-bypass-approvals-and-sandbox"
     emoji: "🤖"
 
   # 예시: 인증 시스템 (시그니처 + 요구사항 패턴)

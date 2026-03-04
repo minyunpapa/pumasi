@@ -19,8 +19,18 @@ const WORKER_PATH = path.join(SCRIPT_DIR, 'pumasi-job-worker.js');
 const SKILL_CONFIG_FILE = path.join(SKILL_DIR, 'pumasi.config.yaml');
 const REPO_CONFIG_FILE = path.join(path.resolve(SKILL_DIR, '../..'), 'pumasi.config.yaml');
 
-const DEFAULT_CODEX_COMMAND = 'codex exec --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check --ephemeral';
+const DEFAULT_CODEX_COMMAND = 'codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral';
 const DEFAULT_TIMEOUT_SEC = 3600;
+
+function killProcess(pid) {
+  try {
+    if (process.platform === 'win32') {
+      process.kill(pid, 'SIGKILL');
+    } else {
+      process.kill(pid, 'SIGTERM');
+    }
+  } catch { /* process already gone */ }
+}
 
 function exitWithError(message) {
   process.stderr.write(`${message}\n`);
@@ -1147,9 +1157,101 @@ function cmdStop(_options, jobDir) {
     const statusPath = path.join(membersRoot, entry, 'status.json');
     const status = readJsonIfExists(statusPath);
     if (!status || status.state !== 'running' || !status.pid) continue;
-    try { process.kill(Number(status.pid), 'SIGTERM'); stoppedAny = true; } catch { /* ignore */ }
+    killProcess(Number(status.pid)); stoppedAny = true;
   }
   process.stdout.write(stoppedAny ? 'stop: 실행 중인 Codex에 SIGTERM 전송\n' : 'stop: 실행 중인 태스크 없음\n');
+}
+
+function cmdRunAll(options, prompt) {
+  // Start round 1
+  cmdStart(options, prompt);
+
+  // Re-read the job dir from .last-job since cmdStart wrote to stdout
+  const jobsDir = options['jobs-dir'] || process.env.PUMASI_JOBS_DIR || path.join(SKILL_DIR, '.jobs');
+  const lastJobFile = path.join(jobsDir, '.last-job');
+  const jobDir = fs.readFileSync(lastJobFile, 'utf8').trim();
+  const resolvedJobDir = path.resolve(jobDir);
+
+  const jobMeta = readJsonIfExists(path.join(resolvedJobDir, 'job.json'));
+  if (!jobMeta) exitWithError('run-all: job.json not found after start');
+  const maxRound = jobMeta.maxRound || 1;
+
+  let shuttingDown = false;
+
+  const cleanup = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    try { cmdStop({}, resolvedJobDir); } catch { /* ignore */ }
+    try { cmdClean({}, resolvedJobDir); } catch { /* ignore */ }
+    process.exit(130);
+  };
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+
+  for (let round = 1; round <= maxRound; round++) {
+    if (shuttingDown) break;
+
+    if (round > 1) {
+      cmdStartRound({ round: String(round), _: [] }, resolvedJobDir);
+    }
+
+    // Wait for current round to complete
+    let overallState = '';
+    while (overallState !== 'done') {
+      if (shuttingDown) break;
+      const payload = computeStatusPayload(resolvedJobDir);
+      overallState = payload.overallState;
+      if (overallState !== 'done') {
+        sleepMs(500);
+      }
+    }
+
+    if (shuttingDown) break;
+
+    // Run gates
+    try { cmdGates({ _: [] }, resolvedJobDir); } catch { /* ignore */ }
+
+    // Check for gate failures
+    const jobMetaRefresh = readJsonIfExists(path.join(resolvedJobDir, 'job.json'));
+    const membersRoot = path.join(resolvedJobDir, 'members');
+    let hasGateFailure = false;
+    for (const task of (jobMetaRefresh.tasks || [])) {
+      const safeName = safeFileName(task.name);
+      const gatesPath = path.join(membersRoot, safeName, 'gates.json');
+      const gates = readJsonIfExists(gatesPath);
+      if (gates && gates.status === 'failed') { hasGateFailure = true; break; }
+    }
+
+    if (hasGateFailure) {
+      process.stderr.write('run-all: gate failures detected, running autofix...\n');
+      try { cmdAutofix({ _: [] }, resolvedJobDir); } catch { /* ignore */ }
+
+      // Wait for autofix tasks to complete
+      overallState = '';
+      while (overallState !== 'done') {
+        if (shuttingDown) break;
+        const payload = computeStatusPayload(resolvedJobDir);
+        overallState = payload.overallState;
+        if (overallState !== 'done') {
+          sleepMs(500);
+        }
+      }
+
+      // Re-run gates after autofix
+      if (!shuttingDown) {
+        try { cmdGates({ _: [] }, resolvedJobDir); } catch { /* ignore */ }
+      }
+    }
+  }
+
+  process.removeListener('SIGINT', cleanup);
+  process.removeListener('SIGTERM', cleanup);
+
+  if (!shuttingDown) {
+    cmdResults({}, resolvedJobDir);
+    cmdClean({}, resolvedJobDir);
+  }
 }
 
 function cmdClean(_options, jobDir) {
@@ -1175,6 +1277,12 @@ function main() {
     return null;
   }
 
+  if (command === 'run-all') {
+    const prompt = rest.join(' ').trim();
+    if (!prompt) exitWithError('run-all: 프로젝트 컨텍스트를 입력하세요');
+    cmdRunAll(options, prompt);
+    return;
+  }
   if (command === 'start') {
     const prompt = rest.join(' ').trim();
     if (!prompt) exitWithError('start: 프로젝트 컨텍스트를 입력하세요');
