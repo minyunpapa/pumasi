@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0] - 2026-03-18
+
+### Changed
+- SKILL.md Progressive Disclosure 리팩토링: 705줄 → 281줄 (60% 감소)
+  - 레퍼런스 콘텐츠를 `references/` 디렉토리로 분리 (6개 파일)
+  - anti-patterns.md, role-separation.md, codex-guide.md, instruction-templates.md, tech-stack.md, examples.md
+  - SKILL.md에 참조 포인터 유지, 필요 시 Read로 로드하는 구조
+  - 핵심 실행 흐름(트리거, 워크플로우, Phase 0~6)은 SKILL.md에 유지
+
 ## [1.3.1] - 2026-03-02
 
 ### Fixed

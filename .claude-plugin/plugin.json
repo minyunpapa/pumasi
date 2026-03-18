@@ -1,6 +1,6 @@
 {
   "name": "pumasi",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Parallel coding orchestration — Claude as PM, Codex CLI instances as parallel developers",
   "author": {
     "name": "chulrolee",
