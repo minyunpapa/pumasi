@@ -1,6 +1,6 @@
 ---
 name: pumasi
-description: Claude가 큰 그림을 설계하고 Codex를 병렬 외주 개발자로 활용하는 스킬. 독립적인 서브태스크를 Codex에 분배하여 동시 구현 후 Claude가 검토·통합한다. "/pumasi", "품앗이로 만들어줘", "품앗이 켜줘", "codex 외주로", "codex한테 시켜" 같은 요청에 사용됩니다. 3개 이상의 독립 모듈을 동시에 만들어야 할 때 자동 감지됩니다.
+description: Parallel coding orchestration — Claude takes the PM/architect role, Codex CLI instances act as parallel outsource developers. Auto-triggers when 3+ independent modules need concurrent implementation. Distributes subtasks to Codex, then Claude reviews and integrates. Korean triggers: "/pumasi", "품앗이로 만들어줘", "품앗이 켜줘", "codex 외주로", "codex한테 시켜". English triggers: "pumasi", "parallel with codex", "delegate to codex", "codex outsource".
 ---
 
 # 품앗이 (Pumasi) — Codex 병렬 외주 개발
