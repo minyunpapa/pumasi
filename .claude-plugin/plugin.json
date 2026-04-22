@@ -1,7 +1,7 @@
 {
   "name": "pumasi",
-  "version": "1.6.0",
-  "description": "Parallel coding orchestration — Claude as PM, Codex CLI instances as parallel developers",
+  "version": "1.7.0",
+  "description": "Parallel coding orchestration + Codex image generation — /pumasi for parallel code, /pumasi:image for AI image generation",
   "author": {
     "name": "chulrolee",
     "url": "https://github.com/fivetaku"
