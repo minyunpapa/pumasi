@@ -97,14 +97,49 @@ codex features enable image_generation
 
 ### Step 5: 저장 경로 계산
 
-**규칙**:
-- 디렉토리: `images/{YYYY-MM-DD}/` (없으면 mkdir)
-- 파일명 slug:
-  - 사용자 요청에서 핵심 명사 1~2개 뽑아 영문 kebab-case로 변환 (예: "AI 마켓플레이스 로고" → `ai-marketplace-logo`)
-  - 같은 날짜/slug가 이미 있으면 `-01`, `-02` 순번 추가
+**기준 디렉토리 (하드코딩 금지, 동적 계산)**:
+
+```bash
+BASE_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+```
+
+- 현재 디렉토리가 git 저장소 안이면 → **git root 기준**
+- git 저장소 밖이면 → 현재 작업 디렉토리(`pwd`) 기준
+
+**저장 경로 조합**:
+- 디렉토리: `{BASE_DIR}/images/{YYYY-MM-DD}/` (없으면 `mkdir -p`)
+- 파일명 slug: 사용자 요청에서 핵심 명사 1~2개를 영문 kebab-case로 변환
+  - 예: "부산 광안대교 야경" → `busan-gwangan-bridge-night`
+  - 예: "AI 마켓플레이스 로고" → `ai-marketplace-logo`
+- 중복 회피: 같은 날짜/slug가 이미 있으면 `-01`, `-02` 순번 추가
 - 확장자: `.png`
 
-최종 경로 예: `/Users/chulrolee/gptaku_plugins/images/2026-04-22/ai-marketplace-logo-01.png`
+**왜 git root 기준인가**:
+- Claude Code 세션의 cwd는 항상 프로젝트 루트가 아닐 수 있다 (홈 디렉토리일 때도 있음)
+- 단순 상대 경로 `images/...`는 cwd에 따라 엉뚱한 곳에 저장될 위험
+- 사용자가 작업 중인 프로젝트의 일부로 이미지를 만드는 경우가 대부분 → **프로젝트 루트 `images/` 하위**가 자연스러운 기본값
+
+**Bash 구현 예시**:
+
+```bash
+BASE_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+DATE=$(date +%Y-%m-%d)
+TARGET_DIR="${BASE_DIR}/images/${DATE}"
+mkdir -p "$TARGET_DIR"
+
+SLUG="busan-gwangan-bridge-night"  # 요청에서 계산
+SEQ=1
+TARGET_PATH="${TARGET_DIR}/${SLUG}-$(printf '%02d' $SEQ).png"
+while [[ -e "$TARGET_PATH" ]]; do
+  SEQ=$((SEQ + 1))
+  TARGET_PATH="${TARGET_DIR}/${SLUG}-$(printf '%02d' $SEQ).png"
+done
+
+echo "$TARGET_PATH"  # imagen.sh 에 넘길 절대 경로 (동적 계산된 값, 하드코딩 아님)
+```
+
+최종 경로 예 (프로젝트 루트가 `/Users/chulrolee/gptaku_plugins` 일 때):
+`/Users/chulrolee/gptaku_plugins/images/2026-04-22/busan-gwangan-bridge-night-01.png`
 
 ### Step 6: Codex /imagen 호출
 
