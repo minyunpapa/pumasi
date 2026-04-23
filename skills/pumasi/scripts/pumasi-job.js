@@ -38,7 +38,12 @@ function exitWithError(message) {
 }
 
 function resolveDefaultConfigFile() {
+  // 1순위: CWD의 .pumasi/ (프로젝트별 config)
+  const cwdConfig = path.join(process.cwd(), '.pumasi', 'pumasi.config.yaml');
+  if (fs.existsSync(cwdConfig)) return cwdConfig;
+  // 2순위: 플러그인 내부 config
   if (fs.existsSync(SKILL_CONFIG_FILE)) return SKILL_CONFIG_FILE;
+  // 3순위: 플러그인 루트 2단계 위
   if (fs.existsSync(REPO_CONFIG_FILE)) return REPO_CONFIG_FILE;
   return SKILL_CONFIG_FILE;
 }
