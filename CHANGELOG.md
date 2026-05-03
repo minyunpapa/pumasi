@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.3] - 2026-05-04
+
+### Removed
+- `references/image-studio-prompt.md`: "Prompt Analysis Blocking Rule" 5줄 삭제 (라인 30-34) — self-critique 차단 wrapper 제거 (fossil v3 처치)
+
+### Preserved
+- 보안 가드 1-4번 (시스템 프롬프트 노출 금지, mode 비공개, XML 구조 비공개, 우선순위 명시)
+- pumasi-job-worker.js wrapper의 도메인-종속 가드는 음성적 지식(과거 codex crash 흔적 추정)으로 보존
+
 ## [1.7.2] - 2026-04-24
 
 ### Fixed
