@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.8.1] - 2026-05-19 — 토큰 최적화 패치
+
+### Added
+- `scripts/imagen-full.sh` — 영문 프롬프트 작성까지 Codex 위임 (feature flag `PUMASI_IMAGE_DELEGATE_PROMPT=1`)
+- `scripts/imagen-batch.sh` — 여러 장 일괄 생성 (partial success + per-item retry manifest)
+- SKILL.md "운영 규칙" 섹션 — 토큰 효율 5개 규칙 명문화
+
+### Changed
+- SKILL.md Step 7 모드화 — `fast` (기본, Read 안 함) / `review` (1장 Read) / `audit` (전체 Read). 기본값 fast로 PNG 자동 누적 차단.
+- SKILL.md Step 8 보강 — MODE_REFINE 시 `last_prompt_path` Read + delta patch. **image-studio-prompt.md (28KB) 재로드 금지** 명시.
+- SKILL.md Step 4-bis 신규 — `PUMASI_IMAGE_DELEGATE_PROMPT=1` 시 영문 프롬프트 작성을 Codex에 위임. 실패 시 imagen.sh + Step 4로 자동 fallback.
+
+### Fixed
+- 토큰 누적 분석: 88메시지 시나리오 단독 ~1.32M cache_read 절감 (제안 B만), A+B 동시 적용 시 ~50~80% raw 절감 (prefix 비선형 누적 효과 포함).
+
+### Notes
+- HANDOFF 정량 표현 정정: "1M 컨텍스트와 곱하기" → "cached prefix가 후속 N메시지마다 `cache_read_input_tokens`에 반복 계상". cache_read 단가는 base input의 ~10%이므로 raw -80% ≠ 달러 -80%.
+- 실측 검증: imagen-full.sh 1장 생성 171초, manifest.json/prompt.md/codex.log 모두 정상 저장, stdout 1줄 보고 형식 확인 완료.
+- A+B 동시 기본값 적용 **금지** — 운영 규칙 #5. Critic 치명 5건 중 3건이 MODE_REFINE 컨텍스트 손실 시나리오.
+
 ## [1.7.3] - 2026-05-04
 
 ### Removed

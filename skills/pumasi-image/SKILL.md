@@ -130,6 +130,22 @@ codex features enable image_generation
 
 없으면 `mkdir -p`로 생성.
 
+### Step 4-bis (실험적, feature flag 뒤): 영문 프롬프트 작성을 Codex에 위임 ★ v1.8.1
+
+환경변수 `PUMASI_IMAGE_DELEGATE_PROMPT=1` 설정 시:
+
+1. Step 4의 image-studio-prompt.md Read + 영문 프롬프트 작성 단계 **스킵**
+2. Step 6에서 imagen.sh 대신 imagen-full.sh 호출
+3. imagen-full.sh에 의도 한 줄 + mode + aspect + quality만 전달
+4. 영문 프롬프트 작성은 Codex 측에서 수행 (Codex가 image-studio-prompt.md를 직접 Read)
+5. Codex가 prompt.md + manifest.json + codex.log를 `{타깃디렉토리}/.imagen-full/`에 저장 (refine 복구용)
+
+⚠️ **비용 이전 안내**: Claude Code 측 토큰은 감소하지만 OpenAI codex 측 토큰이 증가. 사용자 청구 통합 시 절감률 재계산 필요.
+
+⚠️ **자동 fallback**: imagen-full.sh가 exit ≠ 0 시 호출자(Claude)가 즉시 Step 4(이미지-스튜디오 Read + 영문 작성) + imagen.sh 경로로 폴백. 사용자에게는 "Codex 위임 경로 실패 → 직접 작성 경로로 전환" 한 줄 안내.
+
+⚠️ **품질 검증 의무**: feature flag를 default-on으로 전환하기 전, 10~20개 골든 코퍼스 블라인드 평가에서 Codex가 Claude 대비 90% 이상 동등 평가받아야 함.
+
 ### Step 5: 저장 경로 계산
 
 **기준 디렉토리 (하드코딩 금지, 동적 계산)**:
@@ -192,24 +208,60 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh \
 3. 후처리 금지 가드 문구를 프롬프트 끝에 자동 추가
 4. SHA1 일치 검증
 
-### Step 7: 결과 확인 + 표시
+### Step 7: 결과 확인 + 표시 (모드별) ★ v1.8.1
+
+생성 모드를 판정한 후 그에 맞게 동작합니다.
+
+#### 모드 판정 규칙
+
+- **fast/no-read** (기본값): 사용자 입력에 검수/audit 키워드 없고, 모드가 텍스트 의존(E_THUMBNAIL/F_LOGO)도 아니고, 의도에 한글/영문 카피가 없을 때
+- **review/read-one**: 모드가 `MODE_E_THUMBNAIL` / `MODE_F_LOGO` / 의도에 직접 인용된 카피(따옴표 묶임)가 있을 때
+- **audit/read-all**: 사용자가 "검수해줘", "전부 보여줘", "꼼꼼히 확인", "review all" 명시할 때
+
+#### 동작
 
 1. 파일 존재 확인
-2. `file {target_image_path}` 으로 해상도/포맷 출력
-3. **Read** 도구로 이미지 표시 (사용자에게 시각적 피드백)
-4. 저장 경로를 사용자에게 알림
+2. `file {target_image_path}` 출력 (해상도/포맷/sha1)
 
-### Step 8: MODE_REFINE 루프 대기
+3. **모드별 분기**:
 
-사용자가 수정 요청 시 다음을 판단:
-- **동일 이미지 리파인** ("색감 좀 바꿔줘", "더 밝게"): Step 4로 돌아가 이전 프롬프트 기반으로 델타만 반영
+   **fast 모드** (기본):
+   - 경로 안내만:
+     ```
+     ✅ 생성 완료: {path} ({해상도} PNG, sha1: {prefix})
+     Finder 미리보기로 확인하시거나, 깨졌으면 "이미지 보여줘"라고 말씀해주세요.
+     ```
+   - Read 호출 **안 함**
+
+   **review 모드**:
+   - 위 안내 + 마지막 PNG 1장만 Read (텍스트 렌더링 검수)
+   - 안내문에 "[review 모드: 텍스트 검수용 1장 표시]" 추가
+
+   **audit 모드**:
+   - 위 안내 + 모든 PNG Read
+   - 안내문에 "[audit 모드: 전체 검수]" 추가
+
+#### 토큰 영향 (참고)
+- PNG 1장 Read = 약 1,400~3,000 비전 토큰. 1M 컨텍스트 환경에서 cached prefix에 박혀 후속 N메시지마다 `cache_read_input_tokens`에 합산됨.
+- 모드 기본값 fast로 둠으로써 검수 불필요한 워크플로우의 토큰 누적을 차단.
+
+### Step 8: MODE_REFINE 루프 대기 (state 유지 + Step 4 재로드 금지) ★ v1.8.1
+
+생성 직후 다음 정보를 skill state로 유지 (대화 컨텍스트 내):
+- `last_prompt_path`: 마지막 영문 프롬프트 파일 경로 (Step 4 산출물)
+- `last_image_path`: 마지막 PNG 경로
+- `last_manifest_path`: 마지막 manifest.json 경로 (imagen-full.sh 사용 시)
+- 선택 파라미터 (mode / aspect / quality / 의도 답변 3개)
+
+**리파인 판정**:
+
+- **동일 이미지 리파인** ("색감 좀 바꿔줘", "더 밝게"):
+  - Step 4 재로드 **금지** — `last_prompt_path` Read + 사용자 델타만 patch
+  - 시각 컨텍스트 필요 시 `last_image_path` Read (자동으로 review 모드 진입)
+  - 영문 프롬프트 재작성 필요 시 직전 호출 경로(imagen.sh 또는 imagen-full.sh) 유지
+  - image-studio-prompt.md 28KB는 **절대 재로드 X**
+
 - **완전 새 요청**: Step 1부터 다시
-
-이전 대화 컨텍스트에 다음 정보 유지:
-- 마지막 생성 이미지 경로
-- 마지막 사용 프롬프트 파일
-- 선택된 파라미터 (비율/퀄리티/의도 3개)
-- 선택된 모드
 
 ---
 
@@ -245,3 +297,26 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh \
 - Codex CLI 설치 (`command -v codex`)
 - Codex 로그인 완료
 - `codex features` 서브커맨드 사용 가능 (`codex features list`)
+
+---
+
+## 운영 규칙 (토큰 효율) ★ v1.8.1
+
+이 스킬을 사용하는 호출자(Claude)는 다음 규칙을 준수합니다:
+
+1. **Step 7 모드 기본값 fast** — 명시적 검수 요청이 없으면 PNG Read 호출 안 함. PNG 1장 Read = 약 1,400~3,000 비전 토큰이 cached prefix에 박혀 후속 N메시지마다 `cache_read_input_tokens`에 합산됨.
+2. **MODE_REFINE 시 Step 4 재로드 금지** — `last_prompt_path` Read + 델타 patch만. image-studio-prompt.md 28KB는 절대 재로드 X.
+3. **여러 장 일괄 생성 시** — imagen-batch.sh 가용하면 사용, 아니면 imagen.sh를 순차 호출하되 각 호출 사이에 결과 보고를 묶어서 처리 (Bash 라운드트립 감소).
+4. **검수 분리 권장** — 5장 이상 생성한 후 검수가 필요하면 별도 짧은 세션에서 audit 모드 사용 (메인 세션 prefix에 비전 토큰 영구 누적 방지).
+5. **A+B 동시 기본값 금지** — `PUMASI_IMAGE_DELEGATE_PROMPT=1`은 feature flag로만 활성화. Step 7 fast 모드와 동시 적용 시 MODE_REFINE 컨텍스트 부서짐 위험.
+
+---
+
+## 변경 이력
+
+- **v1.8.1** (2026-05-19): 토큰 최적화 패치
+  - Step 7 모드화 (fast/review/audit) — PNG Read 자동 호출 제거
+  - Step 8 state 유지 + Step 4 재로드 금지 명시
+  - Step 4-bis 신규 (feature flag `PUMASI_IMAGE_DELEGATE_PROMPT`)
+  - 운영 규칙 5개 추가
+  - 신규 스크립트: `imagen-full.sh` (Codex 위임), `imagen-batch.sh` (일괄)
