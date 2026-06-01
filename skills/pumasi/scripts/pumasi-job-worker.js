@@ -236,9 +236,13 @@ function main() {
   const args = tokens.slice(1);
 
   // DOE E08: Add --output-schema for structured JSON output
+  // ⚠️ --output-schema/-o 는 codex 전용 플래그다. 다른 CLI(예: Antigravity `agy`)는
+  // 이 플래그를 모르므로 codex일 때만 주입한다. (agy는 `agy --dangerously-skip-permissions -p`
+  // 형태로 쓰며, 프롬프트가 마지막 위치 인자(-p의 값)로 정상 전달된다.)
   const reportPath = path.join(memberDir, 'report.json');
+  const isCodex = /(^|\/)codex$/.test(program);
   const schemaArgs = [];
-  if (fs.existsSync(OUTPUT_SCHEMA_PATH)) {
+  if (isCodex && fs.existsSync(OUTPUT_SCHEMA_PATH)) {
     schemaArgs.push('--output-schema', OUTPUT_SCHEMA_PATH);
     schemaArgs.push('-o', reportPath);
   }

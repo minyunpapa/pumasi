@@ -279,3 +279,17 @@ Round 3: 최종 통합 (Claude 직접)
 command -v codex  # 설치 확인
 # 없으면: npm install -g @openai/codex
 ```
+
+**외주 워커 교체 (선택) — Antigravity CLI(`agy`)**:
+기본 워커는 Codex지만, task의 `command:` 또는 `defaults.command:`를 바꾸면 다른 CLI로 외주할 수 있다.
+Gemini CLI 후계인 Antigravity CLI를 쓰려면 `pumasi.config.yaml`에서:
+```yaml
+pumasi:
+  defaults:
+    command: "agy --dangerously-skip-permissions -p"   # 프롬프트는 -p 값으로 자동 전달됨
+```
+주의사항:
+- `agy`는 codex의 `--output-schema/-o`(구조화 보고서)를 지원하지 않는다 → `report.json` 없이 `output.txt` 기반으로만 통합된다.
+- `agy` 1.0.x는 비-TTY(파이프)에서 stdout 출력이 누락되는 버그가 있어 `output.txt`가 빌 수 있다. 결과가 비면 Claude가 직접 통합하거나 codex로 폴백한다.
+- 모델 지정 플래그(`-m`)는 헤드리스에서 미지원/고정으로 보고됨 → 명령에 넣지 않는다.
+- 설치: `curl -fsSL https://antigravity.google/cli/install.sh | bash`
