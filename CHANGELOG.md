@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.1] - 2026-06-05
+
+### Added
+- `references/anti-patterns.md` "Red Flags — 자가체크표" — PM(Claude)이 개발자 역할(코드 대필)을 침범하기 직전의 충동 5개를 Excuse→Reality 표로 차단. "letter만 지키고 spirit 어기지 마라" 문구 포함.
+
+### Why
+obra/superpowers `writing-skills`의 합리화 차단 패턴 도입. pumasi의 핵심 실패모드(PM이 직접 코드를 써서 Codex가 파일 저장 도구로 전락)를 실행 시점에 직격.
+
 ## [1.8.1] - 2026-05-19 — 토큰 최적화 패치
 
 ### Added
