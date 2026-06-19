@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.10.2] - 2026-06-19
+
+### Added — 외주 워커로 gajae-code(`gjc`) 정식 문서화
+
+command 문자열 방식이라 코드 변경 없이 `defaults.command` / task별 `command`만 바꾸면 gjc로 외주 가능. SKILL.md "외주 워커 교체" 섹션에 agy와 나란히 gjc를 1급 옵션으로 추가.
+
+- `command: "gjc --print"` — 프롬프트가 `--print` 뒤 positional(MESSAGE)로 자동 전달 (워커의 "마지막 positional" 패턴과 호환)
+- codex 전용 `--output-schema/-o`는 gjc에 미주입 → `report.json` 없이 `output.txt` 기반 통합 (graceful, agy와 동일)
+- 실측(2026-06-19): `gjc --print` 비-TTY 파이프에서 stdout 정상 캡처 (agy stdout 누락 버그 없음)
+- task별 혼합 외주(codex/gjc/agy) 안내 추가
+
 ## [1.9.1] - 2026-06-05
 
 ### Added
