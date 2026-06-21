@@ -307,6 +307,18 @@ pumasi:
 - `agy`는 codex의 `--output-schema/-o`(구조화 보고서)를 지원하지 않는다 → `report.json` 없이 `output.txt` 기반으로만 통합된다.
 - `agy` 1.0.x는 비-TTY(파이프)에서 stdout 출력이 누락되는 버그가 있어 `output.txt`가 빌 수 있다. 결과가 비면 Claude가 직접 통합하거나 codex로 폴백한다.
 - 모델 지정 플래그(`-m`)는 헤드리스에서 미지원/고정으로 보고됨 → 명령에 넣지 않는다.
-- 설치: `curl -fsSL https://antigravity.google/cli/install.sh | bash`
+- 설치(검증 권장): 스크립트를 받아 **내용을 확인한 뒤** 실행한다.
+  ```bash
+  curl -fsSL https://antigravity.google/cli/install.sh -o /tmp/agy-install.sh
+  less /tmp/agy-install.sh        # 무엇을 설치하는지 직접 확인
+  bash /tmp/agy-install.sh
+  ```
+  빠른 설치를 원하면 `curl -fsSL https://antigravity.google/cli/install.sh | bash` (원격 스크립트를 검증 없이 즉시 실행 — 신뢰할 때만).
 
 **task별 혼합**: 모듈마다 다른 `command:`를 지정하면 codex / gjc / agy에 병렬로 나눠 외주할 수 있다.
+
+> ⚠️ **샌드박스/승인 우회 안내 (opt-in 경계).** 위 provider 설정의 `--dangerously-skip-permissions`(agy) /
+> `--dangerously-bypass-approvals-and-sandbox`(codex)는 워커가 **승인 프롬프트 없이 파일을 쓰도록** 한다 —
+> 병렬 외주 자동화를 위해 필요한 동작이다. 따라서 pumasi는 **신뢰하는 본인 레포에서만** 실행하고,
+> 외부에서 받은/검토 안 된 코드베이스나 프롬프트에는 쓰지 않는다. `/pumasi` 호출 자체가 이 우회에 대한 명시적 동의이며,
+> 우회 없이 돌리려면 provider `command:`에서 해당 플래그를 빼고 codex 기본 샌드박스(`--full-auto` 등)로 교체한다.

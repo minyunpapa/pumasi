@@ -208,6 +208,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh \
 스크립트 내부에서:
 1. `codex features list`로 feature flag 재확인 (안전망)
 2. `codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox` 호출
+   — ⚠️ 이 플래그는 codex `/imagen`을 **승인 없이 비대화형으로** 돌리기 위한 것으로, 동작은 대상 이미지 경로 1개 쓰기로 한정된다. 신뢰하는 본인 프로젝트에서만 사용한다.
 3. 후처리 금지 가드 문구를 프롬프트 끝에 자동 추가
 4. SHA1 일치 검증
 
