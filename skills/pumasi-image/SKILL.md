@@ -195,22 +195,23 @@ echo "$TARGET_PATH"  # imagen.sh 에 넘길 절대 경로 (동적 계산된 값,
 최종 경로 예 (프로젝트 루트가 `/Users/chulrolee/gptaku_plugins` 일 때):
 `/Users/chulrolee/gptaku_plugins/images/2026-04-22/busan-gwangan-bridge-night-01.png`
 
-### Step 6: Codex /imagen 호출
+### Step 6: Codex 이미지 생성 호출
 
-`${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh`를 실행:
+`${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh`를 실행 (3번째 인자로 비율을 주면 실측 비율과 비교해 경고):
 
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen.sh \
   "{prompt_file_path}" \
-  "{target_image_path}"
+  "{target_image_path}" \
+  "{aspect e.g. 16:9 — 생략 가능}"
 ```
 
 스크립트 내부에서:
-1. `codex features list`로 feature flag 재확인 (안전망)
-2. `codex exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox` 호출
-   — ⚠️ 이 플래그는 codex `/imagen`을 **승인 없이 비대화형으로** 돌리기 위한 것으로, 동작은 대상 이미지 경로 1개 쓰기로 한정된다. 신뢰하는 본인 프로젝트에서만 사용한다.
-3. 후처리 금지 가드 문구를 프롬프트 끝에 자동 추가
-4. SHA1 일치 검증
+1. `codex features list`로 image_generation feature flag 재확인 (안전망)
+2. `codex exec --json … < /dev/null` 호출 — codex가 image 도구로 1장 생성.
+   — ⚠️ bypass 플래그는 **비대화형 실행용**이며 동작은 대상 경로 1개 쓰기로 한정. 신뢰하는 본인 프로젝트에서만. `< /dev/null`은 exec가 stdin EOF를 무한 대기(헤드리스 행)하는 것을 막는다.
+3. **핵심**: `codex exec`는 이미지를 **base64로만 반환**하고 인터랙티브 TUI와 달리 `~/.codex/generated_images/`에 **저장하지 않는다.** → 스크립트가 `extract_image.py`로 stdout(JSONL) 또는 세션 rollout의 `image_generation_call` base64를 디코딩해 **타깃에 직접 저장**한다(이번 호출 산출물만 — 스테일 오집음 불가). 생성 0장이면 거짓 성공 없이 exit 5.
+4. 실측 해상도(`sips`) + 요청 비율과 큰 괴리 시 경고. 후처리는 절대 하지 않음.
 
 ### Step 7: 결과 확인 + 표시 (모드별) ★ v1.8.1
 

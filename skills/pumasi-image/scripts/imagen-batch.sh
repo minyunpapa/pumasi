@@ -25,7 +25,7 @@ TS=$(date +%Y%m%d-%H%M%S)
 RESULTS="${WORK_DIR}/results-${TS}.jsonl"
 : > "$RESULTS"
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/gptaku-plugins/pumasi/1.8.0}"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/gptaku-plugins/pumasi/1.11.0}"
 IMAGEN_FULL="${PLUGIN_ROOT}/skills/pumasi-image/scripts/imagen-full.sh"
 [[ -x "$IMAGEN_FULL" ]] || chmod +x "$IMAGEN_FULL" 2>/dev/null || true
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.11.0 — 2026-06-22
+
+- **`/pumasi:image` 생성 경로 근본 수정.** `codex exec`는 이미지를 생성해 **base64로만 반환**하고, 인터랙티브 TUI와 달리 `~/.codex/generated_images/`에 파일로 저장하지 않는다. 기존 래퍼는 그 폴더에 새 파일이 생기길 기다리다, 모델이 "원본을 타깃에 복사하라"는 지시를 지키려 **기존 스테일 파일을 복사** → *다른 프롬프트인데 같은 이미지* + sha1 가드 거짓 성공이라는 버그를 냈다.
+- **수정:** `imagen.sh` / `imagen-full.sh`가 `codex exec --json`(+ `< /dev/null`로 stdin 행 방지)으로 받아 `extract_image.py`로 stdout(또는 세션 rollout)의 `image_generation_call` base64를 디코딩해 타깃에 **직접 저장**. 생성 0장이면 거짓 성공 없이 `exit 5`. 실제 codex로 1536×1024 PNG 생성 검증 완료.
+- **anti-icon 가드:** 비-로고 단일 심볼 컨셉을 앱아이콘/글래스 배지로 만들지 않도록 `image-studio-prompt.md`에 Format/Medium Guard 추가.
+- **비율 경고:** `sips`로 실측해 요청 비율과 15%↑ 어긋나면 경고(gpt-image는 비율 미보장, 후처리 금지라 보정 안 함).
+- **`imagen-cleanup.sh`** 추가 — `generated_images/` 누적 정리(기본 dry-run, `--apply` 시 trash).
+- 회귀 테스트 `test-imagen-capture.sh`(10/10) + `extract_image.py` 추가. 스테일 `PLUGIN_ROOT` 기본값 `1.8.0` → `1.11.0`.
+
 ## 1.10.3 — 2026-06-21
 
 - The GitHub-star prompt is shown in the user's current language; on a fresh session with no language signal yet, it falls back to the language detected from your recent Claude sessions (else English).
