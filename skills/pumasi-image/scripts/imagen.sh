@@ -21,6 +21,7 @@ measure_dims() { # echo "W H" (측정 실패 시 빈 출력)
     h=$(sips -g pixelHeight "$f" 2>/dev/null | awk '/pixelHeight/{print $2}')
   fi
   [[ -n "$w" && -n "$h" ]] && echo "$w $h"
+  return 0   # set -e 가드: 측정 실패해도 비0 반환 금지 (DIMS=$(...) 중단 방지)
 }
 aspect_warn() { # args: W H "ew:eh"
   local w="$1" h="$2" exp="$3" ew eh got expr diff tol
@@ -32,6 +33,7 @@ aspect_warn() { # args: W H "ew:eh"
   if (( diff > tol )); then
     echo "WARN: aspect mismatch — 요청 ${exp}, 실제 ${w}x${h}. gpt-image-2는 비율을 보장하지 않음(후처리 금지로 보정 불가). 필요하면 비율 힌트를 강화해 재생성하세요." >&2
   fi
+  return 0   # set -e 가드: 비율 일치(경고 없음) 시에도 0 반환
 }
 
 if [[ ! -f "$PROMPT_FILE" ]]; then

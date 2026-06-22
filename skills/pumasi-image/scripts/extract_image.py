@@ -7,30 +7,48 @@ returned inline as base64 in the `result` field of `image_generation_call` /
 `image_generation_end` events. This decodes that base64 and writes the PNG.
 
 Usage: extract_image.py <source_jsonl> <target_png>
-Exit:  0 = wrote target, 1 = no image found, 2 = usage error
+Exit:  0 = wrote target, 1 = no valid image found, 2 = usage error
 """
 import sys, json, base64
 
-def find_results(obj, out):
-    """Collect base64 PNG result strings from image_generation events."""
+PNG_SIG = b"\x89PNG\r\n\x1a\n"          # full 8-byte PNG signature
+PNG_END = b"IEND\xaeB`\x82"             # IEND chunk + its fixed CRC (PNG must end here)
+MIN_PNG = 67                            # smallest real PNG (1x1) is ~67 bytes
+
+
+def collect_b64(obj, out):
+    """Collect candidate base64 result strings, in document order."""
     if isinstance(obj, dict):
-        t = obj.get("type")
-        if t in ("image_generation_call", "image_generation_end"):
+        if obj.get("type") in ("image_generation_call", "image_generation_end"):
             r = obj.get("result")
-            if isinstance(r, str) and r.startswith("iVBOR"):  # PNG magic in base64
-                out.append((obj.get("id") or obj.get("call_id") or "", r))
+            if isinstance(r, str) and r:
+                out.append(r)
         for v in obj.values():
-            find_results(v, out)
+            collect_b64(v, out)
     elif isinstance(obj, list):
         for v in obj:
-            find_results(v, out)
+            collect_b64(v, out)
+
+
+def decode_valid_png(b64):
+    """Return PNG bytes if b64 strictly decodes to a structurally-valid PNG, else None."""
+    try:
+        raw = base64.b64decode(b64, validate=True)   # reject any non-base64 chars
+    except Exception:
+        return None
+    if (len(raw) >= MIN_PNG
+            and raw.startswith(PNG_SIG)
+            and raw.endswith(PNG_END)):
+        return raw
+    return None
+
 
 def main():
     if len(sys.argv) != 3:
         print("usage: extract_image.py <source_jsonl> <target_png>", file=sys.stderr)
         return 2
     src, target = sys.argv[1], sys.argv[2]
-    results = []
+    candidates = []
     try:
         with open(src, "r") as f:
             for line in f:
@@ -41,26 +59,21 @@ def main():
                     obj = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                find_results(obj, results)
+                collect_b64(obj, candidates)
     except OSError as e:
         print(f"cannot read {src}: {e}", file=sys.stderr)
         return 1
-    if not results:
-        return 1
-    # Prefer the largest payload (the final full image, not a progressive/partial frame).
-    _id, b64 = max(results, key=lambda kv: len(kv[1]))
-    try:
-        raw = base64.b64decode(b64)
-    except Exception as e:
-        print(f"base64 decode failed: {e}", file=sys.stderr)
-        return 1
-    if not raw.startswith(b"\x89PNG"):
-        print("decoded bytes are not a PNG", file=sys.stderr)
-        return 1
-    with open(target, "wb") as out:
-        out.write(raw)
-    print(f"wrote {len(raw)} bytes to {target} (call_id={_id})")
-    return 0
+    # Prefer the LAST valid image (the final event), not merely the largest —
+    # progressive/partial frames can precede the final full image.
+    for b64 in reversed(candidates):
+        raw = decode_valid_png(b64)
+        if raw is not None:
+            with open(target, "wb") as out:
+                out.write(raw)
+            print(f"wrote {len(raw)} bytes to {target}")
+            return 0
+    return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

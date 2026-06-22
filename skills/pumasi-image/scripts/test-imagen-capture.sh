@@ -104,6 +104,21 @@ rc=$(run_imagen_full); unset FAKE_CODEX_MODE
 grep -q "MANIFEST=" "${SANDBOX}/out.log" && bad "printed MANIFEST= with no image" || ok "no MANIFEST= line"
 rm -rf "$SANDBOX"
 
+echo "== Test 5: rc-safety under set -e + extractor rejects sub-PNG junk =="
+# measure_dims/aspect_warn must never return nonzero on normal paths (else
+# DIMS=$(...) / && aspect_warn abort the script after a successful save).
+TMPF=$(mktemp)
+{ echo 'set -euo pipefail'
+  sed -n '/^measure_dims() {/,/^}/p' "$IMAGEN"
+  sed -n '/^aspect_warn() {/,/^}/p' "$IMAGEN"
+  echo 'D=$(measure_dims /nonexistent-xyz); X="1920 1080"; [ -n "$X" ] && aspect_warn $X "16:9"'
+} > "$TMPF"
+bash "$TMPF" 2>/dev/null && ok "measure_dims/aspect_warn rc-safe under set -e" || bad "rc-safety regressed (set -e abort)"
+rm -f "$TMPF"
+SB=$(mktemp); printf '%s\n' '{"type":"image_generation_call","result":"iVBORw0KGgpqdW5r"}' > "$SB"; SO=$(mktemp -u).png
+python3 "${SCRIPT_DIR}/extract_image.py" "$SB" "$SO" >/dev/null 2>&1 && bad "extractor accepted fake PNG" || ok "extractor rejects sub-PNG junk"
+rm -f "$SB" "$SO" 2>/dev/null
+
 echo ""
 echo "RESULT: PASS=${PASS} FAIL=${FAIL}"
 [ "$FAIL" -eq 0 ]
