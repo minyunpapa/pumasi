@@ -8,7 +8,7 @@
   },
   "homepage": "https://github.com/fivetaku/pumasi",
   "repository": "https://github.com/fivetaku/pumasi",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "codex",
     "parallel",
