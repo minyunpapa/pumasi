@@ -298,7 +298,7 @@ pumasi:
 - 실측(2026-06-19): 비-TTY 파이프에서도 stdout 정상 출력 — agy 같은 누락 버그 없음.
 - 설치: https://github.com/Yeachan-Heo/gajae-code
 
-**Antigravity CLI(`agy`)** — Gemini CLI 후계 (디자인/UI):
+**Antigravity CLI(`agy`)** (디자인/UI):
 ```yaml
 pumasi:
   defaults:

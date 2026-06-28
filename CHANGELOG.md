@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.3 — 2026-06-29
+
+- **Gemini CLI 잔여 언급 제거**: provider는 이미 codex / antigravity(`agy`)로 단일화돼 있고, SKILL.md에 남아 있던 "Gemini CLI 후계" 설명 한 줄을 제거했다. 기능 변화 없음(문서 정리).
+
 ## 1.11.1 — 2026-06-22
 
 GPT-5.5 Pro 리뷰(insane-review)가 v1.11.0에서 찾아낸 결함 수정:
