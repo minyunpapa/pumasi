@@ -128,7 +128,7 @@ codex features enable image_generation
 
 프롬프트 파일을 다음 경로에 저장:
 ```
-{working_directory}/.omc/imagen/prompt-{timestamp}.md
+{working_directory}/.imagen/prompt-{timestamp}.md
 ```
 
 없으면 `mkdir -p`로 생성.

@@ -12,7 +12,7 @@ if [[ -z "$INTENT" || -z "$TARGET" ]]; then
   exit 2
 fi
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/plugins/cache/gptaku-plugins/pumasi/1.11.0}"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 SYSPROMPT="${PLUGIN_ROOT}/skills/pumasi-image/references/image-studio-prompt.md"
 [[ -f "$SYSPROMPT" ]] || { echo "ERROR: image-studio-prompt.md not found at $SYSPROMPT" >&2; exit 3; }
 

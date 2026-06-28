@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.4 — 2026-06-29
+
+- **omc 잔재 제거**: pumasi-image의 프롬프트 저장 경로 `{working_directory}/.omc/imagen/` → `.imagen/`로 변경(omc 툴 의존이 아니라 디렉토리 이름만 omc 유래였음). `.gitignore`도 정리.
+- **버전 하드코딩 폴백 수정**: `imagen-full.sh`·`imagen-batch.sh`가 `CLAUDE_PLUGIN_ROOT` 미설정 시 죽은 경로(`.../pumasi/1.11.0`)로 폴백하던 것을 스크립트 위치 기반(버전 무관)으로 교체.
+
 ## 1.11.3 — 2026-06-29
 
 - **Gemini CLI 잔여 언급 제거**: provider는 이미 codex / antigravity(`agy`)로 단일화돼 있고, SKILL.md에 남아 있던 "Gemini CLI 후계" 설명 한 줄을 제거했다. 기능 변화 없음(문서 정리).

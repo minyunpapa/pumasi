@@ -7,4 +7,6 @@ __pycache__/
 .jobs/
 context/
 RESEARCH/
-.omc/
+.imagen/
+.imagen-full/
+.imagen-batch/
