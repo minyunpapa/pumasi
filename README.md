@@ -1,6 +1,10 @@
-English | [한국어](README.ko.md)
+English | [한국어](README.ko.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md)
 
 # pumasi
+
+<p align="center">
+  <img src="assets/pumasi-hero-01.png" alt="pumasi" width="320">
+</p>
 
 > **Parallel coding orchestration — Claude as PM, Codex CLI as your dev team.**
 
