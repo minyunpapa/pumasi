@@ -48,10 +48,10 @@ if ! command -v codex >/dev/null 2>&1; then
 fi
 
 # 1) feature flag 확인 + 자동 활성화
-FLAG_STATE=$(codex features list 2>&1 | awk '/^image_generation/ {print $NF}' | head -n1)
+FLAG_STATE=$(codex features list </dev/null 2>&1 | awk '/^image_generation/ {print $NF}' | head -n1)
 if [[ "$FLAG_STATE" != "true" ]]; then
   echo "[imagen.sh] enabling image_generation feature flag..."
-  codex features enable image_generation >/dev/null 2>&1
+  codex features enable image_generation </dev/null >/dev/null 2>&1
 fi
 
 # 2) 저장 디렉토리 준비

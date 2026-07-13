@@ -56,9 +56,9 @@ esac
 # Preflight
 command -v codex >/dev/null 2>&1 || { echo "ERROR: codex CLI not installed" >&2; exit 3; }
 CODEX_VERSION=$(codex --version 2>/dev/null | head -n1)
-FLAG_STATE=$(codex features list 2>&1 | awk '/^image_generation/ {print $NF}' | head -n1)
+FLAG_STATE=$(codex features list </dev/null 2>&1 | awk '/^image_generation/ {print $NF}' | head -n1)
 if [[ "$FLAG_STATE" != "true" ]]; then
-  codex features enable image_generation >/dev/null 2>&1 || true
+  codex features enable image_generation </dev/null >/dev/null 2>&1 || true
 fi
 
 # 구조화된 작업 정의 (prompt injection 표면 축소)
